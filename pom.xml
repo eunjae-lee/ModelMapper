@@ -21,6 +21,14 @@
         </dependency>
     </dependencies>
 
+    <developers>
+        <developer>
+            <name>Eunjae lee</name>
+            <url>https://github.com/eunjae-lee</url>
+            <id>karis612</id>
+        </developer>
+    </developers>
+
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
