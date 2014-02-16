@@ -115,6 +115,7 @@ public class ModelMapper {
 				Class<?>[] parameterTypes = method.getParameterTypes();
 				boolean twoParameters = parameterTypes.length == 2;
 				boolean firstIsInstance = parameterTypes[0].equals(instance.getClass()) ||
+                        parameterTypes[0].isAssignableFrom(instance.getClass()) ||
 						(isExtendingArrayList(instance.getClass()) && isExtendingArrayList(parameterTypes[0]));
 
 				if (twoParameters && firstIsInstance) {// && secondIsJsonArrayOrObject) {
