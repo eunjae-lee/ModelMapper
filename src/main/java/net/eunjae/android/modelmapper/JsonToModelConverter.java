@@ -26,6 +26,8 @@ public class JsonToModelConverter extends AbstractHttpMessageConverter<Object> {
 
 	private boolean writeAcceptCharset = true;
 
+	private ModelMapper modelMapper;
+
 	/**
 	 * Create a new StringHttpMessageConverter instance with a default {@link Charset} of ISO-8859-1,
 	 * and default list of available {@link Charset}'s from {@link Charset#availableCharsets()}.
@@ -55,6 +57,11 @@ public class JsonToModelConverter extends AbstractHttpMessageConverter<Object> {
 		super(new MediaType("application", "json", defaultCharset), MediaType.ALL);
 		this.defaultCharset = defaultCharset;
 		this.availableCharsets = availableCharsets;
+		init();
+	}
+
+	protected void init() {
+		this.modelMapper = ModelMapper.newInstance();
 	}
 
 	@Override
@@ -67,7 +74,7 @@ public class JsonToModelConverter extends AbstractHttpMessageConverter<Object> {
 	protected Object readInternal(Class<?> clazz, String json) {
 		Object obj = null;
 		try {
-			obj = ModelMapper.getInstance().generate(clazz, json);
+			obj = modelMapper.generate(clazz, json);
 		} catch (InstantiationException e) {
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {

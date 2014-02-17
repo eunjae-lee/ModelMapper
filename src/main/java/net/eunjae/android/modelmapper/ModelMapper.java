@@ -24,6 +24,8 @@ public class ModelMapper {
 	private HashMap<Class<?>, ArrayListInfo> arrayListInfoMap = new HashMap<Class<?>, ArrayListInfo>();
 	private HashMap<Class<?>, ObjectInfo> objectInfoMap = new HashMap<Class<?>, ObjectInfo>();
 
+	private OnBeforeMapping onBeforeMapping;
+
 	private ModelMapper() {
 	}
 
@@ -36,6 +38,10 @@ public class ModelMapper {
 			}
 		}
 		return singletonInstance;
+	}
+
+	public static ModelMapper newInstance() {
+		return new ModelMapper();
 	}
 
 	public Object generate(Class<?> clazz, String json) throws IllegalAccessException, JSONException, InstantiationException, IllegalArgumentException {
@@ -81,9 +87,10 @@ public class ModelMapper {
 		}
 
 		if (classInfo instanceof ArrayListInfo) {
-			Pair<Object, JSONArray> pair = ((ArrayListInfo) classInfo).getTopmostObjectAndLeafArray(json);
-			Object topmostObject = pair.first;
-			JSONArray leafArray = pair.second;
+			((ArrayListInfo) classInfo).parseJSON(json);
+			executeOnBeforeMapping(((ArrayListInfo) classInfo).rootObject);
+			Object topmostObject = ((ArrayListInfo) classInfo).topmostObject;
+			JSONArray leafArray = ((ArrayListInfo) classInfo).leafArray;
 			if (leafArray == null) {
 				return null;
 			}
@@ -99,9 +106,10 @@ public class ModelMapper {
 			instance = (ArrayList) invokeCallbackMethod(((ArrayListInfo) classInfo).listItemClass, instance, topmostObject);
 			return instance;
 		} else {
-			Pair<Object, JSONObject> pair = ((ObjectInfo) classInfo).getTopmostObjectAndLeafObject(json);
-			Object topmostObject = pair.first;
-			JSONObject leafObject = pair.second;
+			((ObjectInfo) classInfo).parseJSON(json);
+			executeOnBeforeMapping(((ObjectInfo) classInfo).rootObject);
+			Object topmostObject = ((ObjectInfo) classInfo).topmostObject;
+			JSONObject leafObject = ((ObjectInfo) classInfo).leafObject;
 			Object instance = generateInternal(clazz, leafObject);
 			instance = invokeCallbackMethod(clazz, instance, topmostObject);
 			return instance;
@@ -194,6 +202,16 @@ public class ModelMapper {
 		return result;
 	}
 
+	private void executeOnBeforeMapping(Object data) {
+		if (onBeforeMapping != null) {
+			onBeforeMapping.callback(data);
+		}
+	}
+
+	public void setOnBeforeMapping(OnBeforeMapping onBeforeMapping) {
+		this.onBeforeMapping = onBeforeMapping;
+	}
+
 	private void setFieldValue(Object instance, FieldInfo fieldItem, JSONObject jsonOfModel) throws InstantiationException, IllegalAccessException, JSONException {
 		Field field = fieldItem.field;
 		Class<?> fieldType = field.getType();
@@ -264,6 +282,9 @@ public class ModelMapper {
 		private final JsonResponse classAnnotation;
 		private final String propertyPath;
 		private final String[] propertyPathPieces;
+		private Object topmostObject;
+		private JSONObject leafObject;
+		private Object rootObject;
 
 		public ObjectInfo(Class<?> clazz) {
 			this.classAnnotation = clazz.getAnnotation(JsonResponse.class);
@@ -271,20 +292,17 @@ public class ModelMapper {
 			this.propertyPathPieces = propertyPath.split("\\.");
 		}
 
-		public Pair<Object, JSONObject> getTopmostObjectAndLeafObject(String json) throws JSONException {
-			Object topmostObject;
-			JSONObject leafObject;
+		public void parseJSON(String json) throws JSONException {
 			if ("".equals(propertyPath)) {
-				topmostObject = leafObject = new JSONObject(json);
+				rootObject = topmostObject = leafObject = new JSONObject(json);
 			} else {
-				JSONObject jsonObject = new JSONObject(json);
-				topmostObject = jsonObject.get(propertyPathPieces[0]);
+				rootObject = new JSONObject(json);
+				topmostObject = ((JSONObject) rootObject).get(propertyPathPieces[0]);
+				leafObject = (JSONObject) rootObject;
 				for (String path : propertyPathPieces) {
-					jsonObject = jsonObject.optJSONObject(path);
+					leafObject = leafObject.optJSONObject(path);
 				}
-				leafObject = jsonObject;
 			}
-			return new Pair<Object, JSONObject>(topmostObject, leafObject);
 		}
 	}
 
@@ -296,6 +314,9 @@ public class ModelMapper {
 
 		private final Class listItemClass;
 		private final String propertyPathAsList;
+		private Object topmostObject;
+		private JSONArray leafArray;
+		private Object rootObject;
 
 		public ArrayListInfo(Class<?> listItemClass) {
 			this.listItemClass = listItemClass;
@@ -303,24 +324,22 @@ public class ModelMapper {
 			propertyPathAsList = listItemAnnotation == null ? "" : listItemAnnotation.pathAsList();
 		}
 
-		public Pair<Object, JSONArray> getTopmostObjectAndLeafArray(String json) throws JSONException {
-			Object topmostObject;
-			JSONArray leafArray = null;
+		public void parseJSON(String json) throws JSONException {
+			leafArray = null;
 			if ("".equals(propertyPathAsList)) {
-				topmostObject = leafArray = new JSONArray(json);
+				rootObject = topmostObject = leafArray = new JSONArray(json);
 			} else {
 				String[] paths = propertyPathAsList.split("\\.");
-				JSONObject jsonObject = new JSONObject(json);
-				topmostObject = jsonObject.get(paths[0]);
+				rootObject = new JSONObject(json);
+				topmostObject = ((JSONObject) rootObject).get(paths[0]);
 				for (int i = 0; i < paths.length; i++) {
 					if (i == paths.length - 1) {
-						leafArray = jsonObject.optJSONArray(paths[i]);
+						leafArray = ((JSONObject) rootObject).optJSONArray(paths[i]);
 					} else {
-						jsonObject = jsonObject.optJSONObject(paths[i]);
+						rootObject = ((JSONObject) rootObject).optJSONObject(paths[i]);
 					}
 				}
 			}
-			return new Pair<Object, JSONArray>(topmostObject, leafArray);
 		}
 	}
 
@@ -363,5 +382,9 @@ public class ModelMapper {
 			}
 			return nestedObject;
 		}
+	}
+
+	public static interface OnBeforeMapping {
+		public void callback(Object data);
 	}
 }
