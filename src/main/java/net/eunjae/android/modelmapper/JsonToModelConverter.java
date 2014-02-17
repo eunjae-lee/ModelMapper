@@ -26,7 +26,7 @@ public class JsonToModelConverter extends AbstractHttpMessageConverter<Object> {
 
 	private boolean writeAcceptCharset = true;
 
-	private ModelMapper modelMapper;
+	protected ModelMapper modelMapper;
 
 	/**
 	 * Create a new StringHttpMessageConverter instance with a default {@link Charset} of ISO-8859-1,
