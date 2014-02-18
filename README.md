@@ -8,7 +8,9 @@ This is your json.
 {
   "name": "Eunjae Lee",
   "noshow": false,
-  "albumcnt": 10
+  "albuminfo": {
+    "count": 10
+  }
 }
 
 ```
@@ -17,9 +19,14 @@ This is your model.
 
 ```java
 class User {
+  
   String name;
-  boolean noshow;
-  int albumcnt;
+  
+  @JsonProperty("noshow")
+  boolean noShow;
+  
+  @JsonProperty("albuminfo.count")
+  int albumCount;
 }
 ```
 
