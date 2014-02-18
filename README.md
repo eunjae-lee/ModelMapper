@@ -62,3 +62,7 @@ It's done.
 # Usage
 
 Check out the wiki page: https://github.com/eunjae-lee/ModelMapper/wiki
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/eunjae-lee/modelmapper/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
