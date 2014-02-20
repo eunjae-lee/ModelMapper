@@ -8,7 +8,9 @@ This is your json.
 {
   "name": "Eunjae Lee",
   "noshow": false,
-  "albumcnt": 10
+  "albuminfo": {
+    "count": 10
+  }
 }
 
 ```
@@ -17,9 +19,14 @@ This is your model.
 
 ```java
 class User {
+  
   String name;
-  boolean noshow;
-  int albumcnt;
+  
+  @JsonProperty("noshow")
+  boolean noShow;
+  
+  @JsonProperty("albuminfo.count")
+  int albumCount;
 }
 ```
 
@@ -59,9 +66,12 @@ It's done.
   compile 'net.eunjae.android.modelmapper:ModelMapper:1.0.0'
 ```
 
-# Usage
+# Usage Documentation
 
 Check out the wiki page: https://github.com/eunjae-lee/ModelMapper/wiki
+
+# License
+[MIT](http://opensource.org/licenses/mit-license.html)
 
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/eunjae-lee/modelmapper/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
