@@ -71,7 +71,7 @@ public class JsonToModelConverter extends AbstractHttpMessageConverter<Object> {
 		return readInternal(clazz, json);
 	}
 
-	protected Object readInternal(Class<?> clazz, String json) {
+	protected Object readInternal(Class<?> clazz, String json) throws InvalidCallbackMethodException {
 		Object obj = null;
 		try {
 			obj = modelMapper.generate(clazz, json);
