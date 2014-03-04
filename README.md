@@ -57,13 +57,13 @@ It's done.
   <dependency>
     <groupId>net.eunjae.android.modelmapper</groupId>
     <artifactId>ModelMapper</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
   </dependency>
 ```
 ## Gradle
 
 ```
-  compile 'net.eunjae.android.modelmapper:ModelMapper:1.0.2'
+  compile 'net.eunjae.android.modelmapper:ModelMapper:1.0.3'
 ```
 
 # Usage Documentation
@@ -74,6 +74,10 @@ Check out the wiki page: https://github.com/eunjae-lee/ModelMapper/wiki
 [MIT](http://opensource.org/licenses/mit-license.html)
 
 # Changelog
+
+## 1.0.3
+
+* Now this library throws exceptions when callback method(@AfterMapping) is not declared properly.
 
 ## 1.0.2
 
