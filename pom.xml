@@ -4,7 +4,7 @@
     <artifactId>ModelMapper</artifactId>
     <packaging>jar</packaging>
     <name>Maven core</name>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.3</version>
     <description>An android library to map json string to model objects automatically based on annotations.</description>
     <url>https://github.com/eunjae-lee/ModelMapper</url>
     <dependencies>
