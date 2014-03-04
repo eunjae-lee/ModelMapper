@@ -44,7 +44,7 @@ public class ModelMapper {
 		return new ModelMapper();
 	}
 
-	public Object generate(Class<?> clazz, String json) throws IllegalAccessException, JSONException, InstantiationException, IllegalArgumentException {
+	public Object generate(Class<?> clazz, String json) throws IllegalAccessException, JSONException, InstantiationException, IllegalArgumentException, InvalidCallbackMethodException {
 		if (clazz.equals(ArrayList.class)) {
 			throw new IllegalArgumentException("You should put clazz as List_Something.class which is extending ArrayList<Something>. Otherwise use generateList() method.");
 		}
@@ -76,12 +76,12 @@ public class ModelMapper {
 		}
 	}
 
-	public Object generateList(Class<?> listItemClass, String json) throws IllegalAccessException, JSONException, InstantiationException {
+	public Object generateList(Class<?> listItemClass, String json) throws IllegalAccessException, JSONException, InstantiationException, InvalidCallbackMethodException {
 		ArrayListInfo classInfo = getArrayListInfo(listItemClass);
 		return generateInternal(ArrayList.class, classInfo, json);
 	}
 
-	private Object generateInternal(Class<?> clazz, ClassInfo classInfo, String json) throws IllegalAccessException, InstantiationException, JSONException {
+	private Object generateInternal(Class<?> clazz, ClassInfo classInfo, String json) throws IllegalAccessException, InstantiationException, JSONException, InvalidCallbackMethodException {
 		if (clazz == null || json == null) {
 			return null;
 		}
@@ -116,7 +116,7 @@ public class ModelMapper {
 		}
 	}
 
-	private Object invokeCallbackMethod(Class<?> clazz, Object instance, Object data) {
+	private Object invokeCallbackMethod(Class<?> clazz, Object instance, Object data) throws InvalidCallbackMethodException {
 		ArrayList<Method> methods = getCallbackMethodsRecursively(clazz);
 		for (Method method : methods) {
 			try {
@@ -174,7 +174,7 @@ public class ModelMapper {
 		return instance;
 	}
 
-	private ArrayList<Method> getCallbackMethodsRecursively(Class<?> clazz) {
+	private ArrayList<Method> getCallbackMethodsRecursively(Class<?> clazz) throws InvalidCallbackMethodException {
 		if (clazz == null || clazz.equals(Class.class)) {
 			callbackMethodsByClass.put(clazz, null);
 			return null;
@@ -189,8 +189,8 @@ public class ModelMapper {
 			return null;
 		}
 		for (Method method : methods) {
-			AfterMapping afterMapping = method.getAnnotation(AfterMapping.class);
-			if (afterMapping != null && Modifier.isStatic(method.getModifiers())) {
+			if (isValidCallbackMethod(method)) {
+				method.setAccessible(true);
 				result.add(method);
 			}
 		}
@@ -200,6 +200,27 @@ public class ModelMapper {
 		}
 		callbackMethodsByClass.put(clazz, result);
 		return result;
+	}
+
+	private boolean isValidCallbackMethod(Method method) throws InvalidCallbackMethodException {
+		AfterMapping afterMapping = method.getAnnotation(AfterMapping.class);
+		if (afterMapping == null) {
+			return false;
+		}
+		if (!Modifier.isStatic(method.getModifiers())) {
+			throw new InvalidCallbackMethodException("A callback method \"" + method.toString() + "\" should be static.");
+		}
+		Class<?>[] parameterTypes = method.getParameterTypes();
+		if (isExtendingArrayList(parameterTypes[0])) {
+			if (Void.TYPE.equals(method.getReturnType()) || !isExtendingArrayList(method.getReturnType())) {
+				throw new InvalidCallbackMethodException("A callback method \"" + method.toString() + "\" should return arraylist.");
+			}
+		} else {
+			if (Void.TYPE.equals(method.getReturnType())) {
+				throw new InvalidCallbackMethodException("A callback method \"" + method.toString() + "\" should return object.");
+			}
+		}
+		return true;
 	}
 
 	private void executeOnBeforeMapping(Object data) {
@@ -212,7 +233,7 @@ public class ModelMapper {
 		this.onBeforeMapping = onBeforeMapping;
 	}
 
-	private void setFieldValue(Object instance, FieldInfo fieldItem, JSONObject jsonOfModel) throws InstantiationException, IllegalAccessException, JSONException {
+	private void setFieldValue(Object instance, FieldInfo fieldItem, JSONObject jsonOfModel) throws InstantiationException, IllegalAccessException, JSONException, InvalidCallbackMethodException {
 		Field field = fieldItem.field;
 		Class<?> fieldType = field.getType();
 
