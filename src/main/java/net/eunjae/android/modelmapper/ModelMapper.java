@@ -48,7 +48,7 @@ public class ModelMapper {
 		if (clazz.equals(ArrayList.class)) {
 			throw new IllegalArgumentException("You should put clazz as List_Something.class which is extending ArrayList<Something>. Otherwise use generateList() method.");
 		}
-		if (clazz.getSuperclass().equals(ArrayList.class)) {
+		if (isExtendingArrayList(clazz)) {
 			Class<?> listItemClass = (Class) ((ParameterizedType) clazz.getGenericSuperclass()).getActualTypeArguments()[0];
 			return generateInternal(clazz, getArrayListInfo(listItemClass), json);
 		} else {

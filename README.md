@@ -57,13 +57,13 @@ It's done.
   <dependency>
     <groupId>net.eunjae.android.modelmapper</groupId>
     <artifactId>ModelMapper</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.2</version>
   </dependency>
 ```
 ## Gradle
 
 ```
-  compile 'net.eunjae.android.modelmapper:ModelMapper:1.0.0'
+  compile 'net.eunjae.android.modelmapper:ModelMapper:1.0.2'
 ```
 
 # Usage Documentation
@@ -73,6 +73,11 @@ Check out the wiki page: https://github.com/eunjae-lee/ModelMapper/wiki
 # License
 [MIT](http://opensource.org/licenses/mit-license.html)
 
+# Changelog
+
+## 1.0.2
+
+* Minor bug fix that couldn't recognize array class when it is not directly extending ArrayList.
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/eunjae-lee/modelmapper/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
 
