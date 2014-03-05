@@ -75,6 +75,11 @@ Check out the wiki page: https://github.com/eunjae-lee/ModelMapper/wiki
 
 # Changelog
 
+## 1.0.4
+
+* Now ModelMapper just returns json string if the first argument of ModelMapper.getInstance().generate(...) is String.class.
+** There was a bug that it returned an empty string in that case.
+
 ## 1.0.3
 
 * Now this library throws exceptions when callback method(@AfterMapping) is not declared properly.

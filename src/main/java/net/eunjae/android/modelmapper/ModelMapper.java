@@ -45,6 +45,9 @@ public class ModelMapper {
 	}
 
 	public Object generate(Class<?> clazz, String json) throws IllegalAccessException, JSONException, InstantiationException, IllegalArgumentException, InvalidCallbackMethodException {
+		if (String.class.equals(clazz)) {
+			return json;
+		}
 		if (clazz.equals(ArrayList.class)) {
 			throw new IllegalArgumentException("You should put clazz as List_Something.class which is extending ArrayList<Something>. Otherwise use generateList() method.");
 		}
