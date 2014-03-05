@@ -246,7 +246,7 @@ public class ModelMapper {
             return array.optLong(index);
         } else if (String.class.equals(type)) {
             return array.optString(index);
-        } else if (ArrayList.class.equals(((ParameterizedType) type).getRawType())) {
+        } else if (type instanceof ParameterizedType && ArrayList.class.equals(((ParameterizedType) type).getRawType())) {
             return array.optJSONArray(index);
         } else {
             return array.optJSONObject(index);
@@ -286,7 +286,13 @@ public class ModelMapper {
                                 if (secondArrayList == null) {
                                     secondArrayList = new ArrayList();
                                 }
-                                secondArrayList.add(secondValue);
+                                if (secondValue instanceof JSONArray) {
+                                    // NO!!!
+                                } else if (secondValue instanceof JSONObject) {
+                                    secondArrayList.add(generateInternal(((Class) secondInnerItemType), ((JSONObject) secondValue)));
+                                } else {
+                                    secondArrayList.add(secondValue);
+                                }
                             }
                             if (arrayList == null) {
                                 arrayList = new ArrayList();

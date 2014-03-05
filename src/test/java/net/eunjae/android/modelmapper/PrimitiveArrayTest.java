@@ -6,6 +6,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class PrimitiveArrayTest {
 
@@ -110,6 +111,52 @@ public class PrimitiveArrayTest {
         assertEquals(4, (int) model.getArr().get(1).get(0).get(1));
     }
 
+    /*
+        {
+            "arr": [
+                [
+                    [
+                        {
+                            "name": "Paul"
+                        }
+                    ]
+                ],
+                [
+                    [
+                        {
+                            "name": "Jane"
+                        }
+                    ]
+                ]
+            ]
+        }
+     */
+    @Test
+    public void testNestedNestedObjectArray() throws IllegalAccessException, JSONException, InstantiationException {
+        String json = " {\n" +
+                "            \"arr\": [\n" +
+                "                [\n" +
+                "                    [\n" +
+                "                        {\n" +
+                "                            \"name\": \"Paul\"\n" +
+                "                        }\n" +
+                "                    ]\n" +
+                "                ],\n" +
+                "                [\n" +
+                "                    [\n" +
+                "                        {\n" +
+                "                            \"name\": \"Jane\"\n" +
+                "                        }\n" +
+                "                    ]\n" +
+                "                ]\n" +
+                "            ]\n" +
+                "        }";
+        Model4 model = (Model4) ModelMapper.newInstance().generate(Model4.class, json);
+        assertTrue(model.getArr().get(0).get(0).get(0) instanceof Model5);
+        assertEquals("Paul", model.getArr().get(0).get(0).get(0).name);
+        assertEquals("Jane", model.getArr().get(1).get(0).get(0).name);
+    }
+
     public static class Model {
         ArrayList<Integer> arr;
 
@@ -134,4 +181,15 @@ public class PrimitiveArrayTest {
         }
     }
 
+    public static class Model4 {
+        ArrayList<ArrayList<ArrayList<Model5>>> arr;
+
+        public ArrayList<ArrayList<ArrayList<Model5>>> getArr() {
+            return arr;
+        }
+    }
+
+    public static class Model5 {
+        String name;
+    }
 }
