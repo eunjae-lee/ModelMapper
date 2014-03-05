@@ -1,6 +1,5 @@
 package net.eunjae.android.modelmapper;
 
-import android.util.Pair;
 import net.eunjae.android.modelmapper.annotation.AfterMapping;
 import net.eunjae.android.modelmapper.annotation.JsonProperty;
 import net.eunjae.android.modelmapper.annotation.JsonResponse;
@@ -8,10 +7,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.*;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +16,7 @@ public class ModelMapper {
 	private static ModelMapper singletonInstance = null;
 
 	private HashMap<Class<?>, ArrayList<FieldInfo>> fieldInfosMap = new HashMap<Class<?>, ArrayList<FieldInfo>>();
-	private HashMap<Class<?>, ArrayList<Method>> callbackMethodsByClass = new HashMap<Class<?>, ArrayList<Method>>();
+	private HashMap<Type, ArrayList<Method>> callbackMethodsByType = new HashMap<Type, ArrayList<Method>>();
 	private HashMap<Class<?>, ArrayListInfo> arrayListInfoMap = new HashMap<Class<?>, ArrayListInfo>();
 	private HashMap<Class<?>, ObjectInfo> objectInfoMap = new HashMap<Class<?>, ObjectInfo>();
 
@@ -119,23 +115,25 @@ public class ModelMapper {
 		}
 	}
 
-	private Object invokeCallbackMethod(Class<?> clazz, Object instance, Object data) throws InvalidCallbackMethodException {
-		ArrayList<Method> methods = getCallbackMethodsRecursively(clazz);
-		for (Method method : methods) {
-			try {
-				Class<?>[] parameterTypes = method.getParameterTypes();
-				boolean twoParameters = parameterTypes.length == 2;
-				boolean firstIsInstance = parameterTypes[0].equals(instance.getClass()) ||
-                        parameterTypes[0].isAssignableFrom(instance.getClass()) ||
-						(isExtendingArrayList(instance.getClass()) && isExtendingArrayList(parameterTypes[0]));
+	private Object invokeCallbackMethod(Type type, Object instance, Object data) throws InvalidCallbackMethodException {
+		ArrayList<Method> methods = getCallbackMethodsRecursively(type);
+        if (methods != null) {
+            for (Method method : methods) {
+                try {
+                    Class<?>[] parameterTypes = method.getParameterTypes();
+                    boolean twoParameters = parameterTypes.length == 2;
+                    boolean firstIsInstance = parameterTypes[0].equals(instance.getClass()) ||
+                            parameterTypes[0].isAssignableFrom(instance.getClass()) ||
+                            (isExtendingArrayList(instance.getClass()) && isExtendingArrayList(parameterTypes[0]));
 
-				if (twoParameters && firstIsInstance) {// && secondIsJsonArrayOrObject) {
-					instance = method.invoke(null, instance, data);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+                    if (twoParameters && firstIsInstance) {// && secondIsJsonArrayOrObject) {
+                        instance = method.invoke(null, instance, data);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
 		return instance;
 	}
 
@@ -172,23 +170,24 @@ public class ModelMapper {
 			try {
 				setFieldValue(instance, fieldItem, jsonOfModel);
 			} catch (Exception e) {
+                e.printStackTrace();
 			}
 		}
 		return instance;
 	}
 
-	private ArrayList<Method> getCallbackMethodsRecursively(Class<?> clazz) throws InvalidCallbackMethodException {
-		if (clazz == null || clazz.equals(Class.class)) {
-			callbackMethodsByClass.put(clazz, null);
+	private ArrayList<Method> getCallbackMethodsRecursively(Type type) throws InvalidCallbackMethodException {
+		if (type == null || type.equals(Class.class) || type instanceof Class == false) {
+			callbackMethodsByType.put(type, null);
 			return null;
 		}
-		if (callbackMethodsByClass.containsKey(clazz)) {
-			return callbackMethodsByClass.get(clazz);
+		if (callbackMethodsByType.containsKey(type)) {
+			return callbackMethodsByType.get(type);
 		}
 		ArrayList<Method> result = new ArrayList<Method>();
-		Method[] methods = clazz.getDeclaredMethods();
+		Method[] methods = ((Class) type).getDeclaredMethods();
 		if (methods == null) {
-			callbackMethodsByClass.put(clazz, null);
+			callbackMethodsByType.put(type, null);
 			return null;
 		}
 		for (Method method : methods) {
@@ -197,11 +196,11 @@ public class ModelMapper {
 				result.add(method);
 			}
 		}
-		ArrayList<Method> methodsFromSuperClass = getCallbackMethodsRecursively(clazz.getSuperclass());
+		ArrayList<Method> methodsFromSuperClass = getCallbackMethodsRecursively(((Class) type).getSuperclass());
 		if (methodsFromSuperClass != null) {
 			result.addAll(methodsFromSuperClass);
 		}
-		callbackMethodsByClass.put(clazz, result);
+		callbackMethodsByType.put(type, result);
 		return result;
 	}
 
@@ -236,6 +235,24 @@ public class ModelMapper {
 		this.onBeforeMapping = onBeforeMapping;
 	}
 
+    private Object getObjectForField(Type type, JSONArray array, int index) {
+        if (Integer.class.equals(type)) {
+            return array.optInt(index);
+        } else if (Boolean.class.equals(type)) {
+            return array.optBoolean(index);
+        } else if (Double.class.equals(type)) {
+            return array.optDouble(index);
+        } else if (Long.class.equals(type)) {
+            return array.optLong(index);
+        } else if (String.class.equals(type)) {
+            return array.optString(index);
+        } else if (ArrayList.class.equals(((ParameterizedType) type).getRawType())) {
+            return array.optJSONArray(index);
+        } else {
+            return array.optJSONObject(index);
+        }
+    }
+
 	private void setFieldValue(Object instance, FieldInfo fieldItem, JSONObject jsonOfModel) throws InstantiationException, IllegalAccessException, JSONException, InvalidCallbackMethodException {
 		Field field = fieldItem.field;
 		Class<?> fieldType = field.getType();
@@ -246,13 +263,53 @@ public class ModelMapper {
 			JSONObject leafWrapper = fieldItem.getLeafWrapperObject(jsonOfModel);
 			JSONArray leafArray = leafWrapper.optJSONArray(fieldItem.leafPropertyName);
 			for (int i = 0; i < leafArray.length(); i++) {
-				Object item = generateInternal(fieldItem.listItemType, leafArray.optJSONObject(i));
-				if (fieldValue == null) {
-					fieldValue = (ArrayList) fieldType.newInstance();
-				}
-				item = invokeCallbackMethod(fieldItem.listItemType, item, leafArray.optJSONObject(i));
-				fieldValue.add(item);
-			}
+                Object objectForField = getObjectForField(fieldItem.listItemType, leafArray, i);
+                if (objectForField instanceof JSONObject) {
+                    Object item = generateInternal((Class<?>) fieldItem.listItemType, (JSONObject) objectForField);
+                    item = invokeCallbackMethod((Class<?>) fieldItem.listItemType, item, objectForField);
+                    if (fieldValue == null) {
+                        fieldValue = (ArrayList) fieldType.newInstance();
+                    }
+                    fieldValue.add(item);
+                } else if (objectForField instanceof JSONArray) {
+                    Type innerItemType = ((ParameterizedType) fieldItem.listItemType).getActualTypeArguments()[0];
+                    JSONArray jsonArray = (JSONArray) objectForField;
+                    ArrayList arrayList = null;
+                    for (int j = 0; j < jsonArray.length(); j++) {
+                        Object value = getObjectForField(innerItemType, jsonArray, j);
+                        if (value instanceof JSONArray) {
+                            Type secondInnerItemType = ((ParameterizedType) innerItemType).getActualTypeArguments()[0];
+                            JSONArray secondJsonArray = (JSONArray) value;
+                            ArrayList secondArrayList = null;
+                            for (int k = 0; k < secondJsonArray.length(); k++) {
+                                Object secondValue = getObjectForField(secondInnerItemType, secondJsonArray, k);
+                                if (secondArrayList == null) {
+                                    secondArrayList = new ArrayList();
+                                }
+                                secondArrayList.add(secondValue);
+                            }
+                            if (arrayList == null) {
+                                arrayList = new ArrayList();
+                            }
+                            arrayList.add(secondArrayList);
+                        } else {
+                            if (arrayList == null) {
+                                arrayList = new ArrayList();
+                            }
+                            arrayList.add(value);
+                        }
+                    }
+                    if (fieldValue == null) {
+                        fieldValue = (ArrayList) fieldType.newInstance();
+                    }
+                    fieldValue.add(arrayList);
+                } else {
+                    if (fieldValue == null) {
+                        fieldValue = (ArrayList) fieldType.newInstance();
+                    }
+                    fieldValue.add(objectForField);
+                }
+            }
 
 			if (fieldValue != null) {
 				fieldValue = (ArrayList) invokeCallbackMethod(fieldItem.listItemType, fieldValue, fieldItem.getTopmostObjectJSON(jsonOfModel));
@@ -372,7 +429,7 @@ public class ModelMapper {
 		private final String fullPropertyName;
 		private final Class<?> fieldType;
 		private final boolean isArrayList;
-		private final Class listItemType;
+		private final Type listItemType;
 		private final String[] propertyNamePieces;
 		private final String leafPropertyName;
 
@@ -387,7 +444,7 @@ public class ModelMapper {
 			this.fieldType = field.getType();
 			this.isArrayList = isExtendingArrayList(fieldType);
 			if (isArrayList) {
-				this.listItemType = (Class) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
+				this.listItemType = (Type) ((ParameterizedType) field.getGenericType()).getActualTypeArguments()[0];
 			} else {
 				this.listItemType = null;
 			}
