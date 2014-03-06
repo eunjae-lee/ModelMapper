@@ -57,13 +57,13 @@ It's done.
   <dependency>
     <groupId>net.eunjae.android.modelmapper</groupId>
     <artifactId>ModelMapper</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.5</version>
   </dependency>
 ```
 ## Gradle
 
 ```
-  compile 'net.eunjae.android.modelmapper:ModelMapper:1.0.3'
+  compile 'net.eunjae.android.modelmapper:ModelMapper:1.0.5'
 ```
 
 # Usage Documentation
@@ -74,6 +74,11 @@ Check out the wiki page: https://github.com/eunjae-lee/ModelMapper/wiki
 [MIT](http://opensource.org/licenses/mit-license.html)
 
 # Changelog
+
+## 1.0.5 (2014/03/06)
+
+* Bugs are fixed when it can't parse json strings with unusual structure.
+* Test cases are added.
 
 ## 1.0.4
 
