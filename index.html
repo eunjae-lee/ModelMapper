@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Modelmapper : An android library to map json string to model objects automatically based on annotations." />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Modelmapper</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/eunjae-lee/ModelMapper">View on GitHub</a>
+
+          <h1 id="project_title">Modelmapper</h1>
+          <h2 id="project_tagline">An android library to map json string to model objects automatically based on annotations.</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/eunjae-lee/ModelMapper/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/eunjae-lee/ModelMapper/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <h1>
+<a name="modelmapper" class="anchor" href="#modelmapper"><span class="octicon octicon-link"></span></a>ModelMapper</h1>
+
+<p>ModelMapper is an Android library to help parsing JSON strings and mapping it to objects of model classes automatically.</p>
+
+<p>This is your json.</p>
+
+<div class="highlight highlight-json"><pre><span class="p">{</span>
+  <span class="nt">"name"</span><span class="p">:</span> <span class="s2">"Eunjae Lee"</span><span class="p">,</span>
+  <span class="nt">"noshow"</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+  <span class="nt">"albuminfo"</span><span class="p">:</span> <span class="p">{</span>
+    <span class="nt">"count"</span><span class="p">:</span> <span class="mi">10</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+</pre></div>
+
+<p>This is your model.</p>
+
+<div class="highlight highlight-java"><pre><span class="kd">class</span> <span class="nc">User</span> <span class="o">{</span>
+
+  <span class="n">String</span> <span class="n">name</span><span class="o">;</span>
+
+  <span class="nd">@JsonProperty</span><span class="o">(</span><span class="s">"noshow"</span><span class="o">)</span>
+  <span class="kt">boolean</span> <span class="n">noShow</span><span class="o">;</span>
+
+  <span class="nd">@JsonProperty</span><span class="o">(</span><span class="s">"albuminfo.count"</span><span class="o">)</span>
+  <span class="kt">int</span> <span class="n">albumCount</span><span class="o">;</span>
+<span class="o">}</span>
+</pre></div>
+
+<p>And all you need to do is:</p>
+
+<div class="highlight highlight-java"><pre><span class="n">User</span> <span class="n">user</span> <span class="o">=</span> <span class="n">ModelMapper</span><span class="o">.</span><span class="na">getInstance</span><span class="o">().</span><span class="na">generate</span><span class="o">(</span><span class="n">User</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">jsonString</span><span class="o">);</span>
+</pre></div>
+
+<p>And if you're using AndroidAnnotations, it gets simpler. You just need to put an converter at rest client interface.</p>
+
+<div class="highlight highlight-java"><pre><span class="nd">@Rest</span><span class="o">(</span><span class="n">converters</span> <span class="o">=</span> <span class="o">{</span><span class="n">JsonToModelConverter</span><span class="o">.</span><span class="na">class</span><span class="o">})</span>
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">MyRestClient</span> <span class="o">{</span>
+
+  <span class="nd">@Get</span><span class="o">(</span><span class="s">"/..."</span><span class="o">)</span>
+  <span class="n">User</span> <span class="nf">getUser</span><span class="o">();</span>
+<span class="o">}</span>
+</pre></div>
+
+<p>It's done.</p>
+
+<h1>
+<a name="download" class="anchor" href="#download"><span class="octicon octicon-link"></span></a>Download</h1>
+
+<h2>
+<a name="maven" class="anchor" href="#maven"><span class="octicon octicon-link"></span></a>Maven</h2>
+
+<div class="highlight highlight-xml"><pre>  <span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>net.eunjae.android.modelmapper<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>ModelMapper<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>1.0.5<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;/dependency&gt;</span>
+</pre></div>
+
+<h2>
+<a name="gradle" class="anchor" href="#gradle"><span class="octicon octicon-link"></span></a>Gradle</h2>
+
+<pre><code>  compile 'net.eunjae.android.modelmapper:ModelMapper:1.0.5'
+</code></pre>
+
+<h1>
+<a name="usage-documentation" class="anchor" href="#usage-documentation"><span class="octicon octicon-link"></span></a>Usage Documentation</h1>
+
+<p>Check out the wiki page: <a href="https://github.com/eunjae-lee/ModelMapper/wiki">https://github.com/eunjae-lee/ModelMapper/wiki</a></p>
+
+<h1>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h1>
+
+<p><a href="http://opensource.org/licenses/mit-license.html">MIT</a></p>
+
+<h1>
+<a name="changelog" class="anchor" href="#changelog"><span class="octicon octicon-link"></span></a>Changelog</h1>
+
+<h2>
+<a name="105-20140306" class="anchor" href="#105-20140306"><span class="octicon octicon-link"></span></a>1.0.5 (2014/03/06)</h2>
+
+<ul>
+<li>Bugs are fixed when it can't parse json strings with unusual structure.</li>
+<li>Test cases are added.</li>
+</ul><h2>
+<a name="104" class="anchor" href="#104"><span class="octicon octicon-link"></span></a>1.0.4</h2>
+
+<ul>
+<li>Now ModelMapper just returns json string if the first argument of ModelMapper.getInstance().generate(...) is String.class.
+** There was a bug that it returned an empty string in that case.</li>
+</ul><h2>
+<a name="103" class="anchor" href="#103"><span class="octicon octicon-link"></span></a>1.0.3</h2>
+
+<ul>
+<li>Now this library throws exceptions when callback method(@AfterMapping) is not declared properly.</li>
+</ul><h2>
+<a name="102" class="anchor" href="#102"><span class="octicon octicon-link"></span></a>1.0.2</h2>
+
+<ul>
+<li>Minor bug fix that couldn't recognize array class when it is not directly extending ArrayList.</li>
+</ul><p><a href="https://bitdeli.com/free" title="Bitdeli Badge"><img src="https://d2weczhvl823v0.cloudfront.net/eunjae-lee/modelmapper/trend.png" alt="Bitdeli Badge"></a></p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Modelmapper maintained by <a href="https://github.com/eunjae-lee">eunjae-lee</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
