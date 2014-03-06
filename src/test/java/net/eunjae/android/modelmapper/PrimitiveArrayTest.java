@@ -1,6 +1,8 @@
 package net.eunjae.android.modelmapper;
 
+import net.eunjae.android.modelmapper.annotation.AfterMapping;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -155,7 +157,30 @@ public class PrimitiveArrayTest {
         assertTrue(model.getArr().get(0).get(0).get(0) instanceof Model5);
         assertEquals("Paul", model.getArr().get(0).get(0).get(0).name);
         assertEquals("Jane", model.getArr().get(1).get(0).get(0).name);
+        assertEquals(model.getArr().get(0).get(0).get(0).cnt, model.getArr().get(0).get(0).get(0).name.length());
+        assertEquals(model.getArr().get(1).get(0).get(0).cnt, model.getArr().get(1).get(0).get(0).name.length());
+		assertEquals(2, model.count);
     }
+
+	/*
+		{
+		  "obj": {
+			"arr": ["a", "b", "c"]
+		  }
+		}
+	 */
+	@Test
+	public void testNestedArrayInObject() throws IllegalAccessException, JSONException, InstantiationException {
+		String json = "{\n" +
+						"  \"obj\": {\n" +
+						"    \"arr\": [\"a\", \"b\", \"c\"]\n" +
+						"  }\n" +
+						"}";
+		Model6 obj = (Model6) ModelMapper.newInstance().generate(Model6.class, json);
+		assertEquals("a", obj.obj.arr.get(0));
+		assertEquals("b", obj.obj.arr.get(1));
+		assertEquals("c", obj.obj.arr.get(2));
+	}
 
     public static class Model {
         ArrayList<Integer> arr;
@@ -183,13 +208,35 @@ public class PrimitiveArrayTest {
 
     public static class Model4 {
         ArrayList<ArrayList<ArrayList<Model5>>> arr;
+		int count = 0;
 
         public ArrayList<ArrayList<ArrayList<Model5>>> getArr() {
             return arr;
         }
-    }
+
+		@AfterMapping
+		static Model4 callback(Model4 model, Object data) {
+			model.count = model.arr.size();
+			return model;
+		}
+	}
 
     public static class Model5 {
         String name;
-    }
+		int cnt;
+
+		@AfterMapping
+		static Model5 callback(Model5 model, Object data) {
+			model.cnt = model.name.length();
+			return model;
+		}
+	}
+
+	public static class Model6 {
+		Model7 obj;
+	}
+
+	public static class Model7 {
+		ArrayList<String> arr;
+	}
 }

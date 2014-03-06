@@ -253,76 +253,41 @@ public class ModelMapper {
         }
     }
 
+	private Object getArrayListForField(Class<?> fieldType, Type listItemType, JSONArray leafArray) throws IllegalAccessException, InstantiationException {
+		ArrayList fieldValue = (ArrayList) fieldType.newInstance();
+		for (int i = 0; i < leafArray.length(); i++) {
+			Object objectForField = getObjectForField(listItemType, leafArray, i);
+			if (objectForField instanceof JSONObject) {
+				Object item = generateInternal((Class<?>) listItemType, (JSONObject) objectForField);
+				item = invokeCallbackMethod(listItemType, item, objectForField);
+				fieldValue.add(item);
+			} else if (objectForField instanceof JSONArray) {
+				Type innerItemType = ((ParameterizedType) listItemType).getActualTypeArguments()[0];
+				JSONArray jsonArray = (JSONArray) objectForField;
+				ArrayList arrayList = (ArrayList) getArrayListForField(ArrayList.class, innerItemType, jsonArray);
+				if (arrayList != null && arrayList.size() > 0) {
+					fieldValue.add(arrayList);
+				}
+			} else {
+				fieldValue.add(objectForField);
+			}
+		}
+		return fieldValue.size() == 0 ? null : fieldValue;
+	}
+
 	private void setFieldValue(Object instance, FieldInfo fieldItem, JSONObject jsonOfModel) throws InstantiationException, IllegalAccessException, JSONException, InvalidCallbackMethodException {
 		Field field = fieldItem.field;
 		Class<?> fieldType = field.getType();
 
+		JSONObject leafWrapper = fieldItem.getLeafWrapperObject(jsonOfModel);
 		if (fieldItem.isArrayList) {
-			ArrayList fieldValue = null;
-
-			JSONObject leafWrapper = fieldItem.getLeafWrapperObject(jsonOfModel);
 			JSONArray leafArray = leafWrapper.optJSONArray(fieldItem.leafPropertyName);
-			for (int i = 0; i < leafArray.length(); i++) {
-                Object objectForField = getObjectForField(fieldItem.listItemType, leafArray, i);
-                if (objectForField instanceof JSONObject) {
-                    Object item = generateInternal((Class<?>) fieldItem.listItemType, (JSONObject) objectForField);
-                    item = invokeCallbackMethod((Class<?>) fieldItem.listItemType, item, objectForField);
-                    if (fieldValue == null) {
-                        fieldValue = (ArrayList) fieldType.newInstance();
-                    }
-                    fieldValue.add(item);
-                } else if (objectForField instanceof JSONArray) {
-                    Type innerItemType = ((ParameterizedType) fieldItem.listItemType).getActualTypeArguments()[0];
-                    JSONArray jsonArray = (JSONArray) objectForField;
-                    ArrayList arrayList = null;
-                    for (int j = 0; j < jsonArray.length(); j++) {
-                        Object value = getObjectForField(innerItemType, jsonArray, j);
-                        if (value instanceof JSONArray) {
-                            Type secondInnerItemType = ((ParameterizedType) innerItemType).getActualTypeArguments()[0];
-                            JSONArray secondJsonArray = (JSONArray) value;
-                            ArrayList secondArrayList = null;
-                            for (int k = 0; k < secondJsonArray.length(); k++) {
-                                Object secondValue = getObjectForField(secondInnerItemType, secondJsonArray, k);
-                                if (secondArrayList == null) {
-                                    secondArrayList = new ArrayList();
-                                }
-                                if (secondValue instanceof JSONArray) {
-                                    // NO!!!
-                                } else if (secondValue instanceof JSONObject) {
-                                    secondArrayList.add(generateInternal(((Class) secondInnerItemType), ((JSONObject) secondValue)));
-                                } else {
-                                    secondArrayList.add(secondValue);
-                                }
-                            }
-                            if (arrayList == null) {
-                                arrayList = new ArrayList();
-                            }
-                            arrayList.add(secondArrayList);
-                        } else {
-                            if (arrayList == null) {
-                                arrayList = new ArrayList();
-                            }
-                            arrayList.add(value);
-                        }
-                    }
-                    if (fieldValue == null) {
-                        fieldValue = (ArrayList) fieldType.newInstance();
-                    }
-                    fieldValue.add(arrayList);
-                } else {
-                    if (fieldValue == null) {
-                        fieldValue = (ArrayList) fieldType.newInstance();
-                    }
-                    fieldValue.add(objectForField);
-                }
-            }
-
+			ArrayList fieldValue = (ArrayList) getArrayListForField(fieldType, fieldItem.listItemType, leafArray);
 			if (fieldValue != null) {
 				fieldValue = (ArrayList) invokeCallbackMethod(fieldItem.listItemType, fieldValue, fieldItem.getTopmostObjectJSON(jsonOfModel));
 			}
 			field.set(instance, fieldValue);
 		} else {
-			JSONObject leafWrapper = fieldItem.getLeafWrapperObject(jsonOfModel);
 			String propertyName = fieldItem.leafPropertyName;
 			boolean jsonHasProperty = leafWrapper.has(propertyName);
 			if (!jsonHasProperty) {
