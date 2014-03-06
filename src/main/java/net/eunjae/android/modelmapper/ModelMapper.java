@@ -254,6 +254,9 @@ public class ModelMapper {
     }
 
 	private Object getArrayListForField(Class<?> fieldType, Type listItemType, JSONArray leafArray) throws IllegalAccessException, InstantiationException {
+		if (leafArray == null) {
+			return null;
+		}
 		ArrayList fieldValue = (ArrayList) fieldType.newInstance();
 		for (int i = 0; i < leafArray.length(); i++) {
 			Object objectForField = getObjectForField(listItemType, leafArray, i);
