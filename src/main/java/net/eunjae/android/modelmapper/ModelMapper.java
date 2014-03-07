@@ -41,6 +41,9 @@ public class ModelMapper {
 	}
 
 	public Object generate(Class<?> clazz, String json) throws IllegalAccessException, JSONException, InstantiationException, IllegalArgumentException, InvalidCallbackMethodException {
+		if (onBeforeMapping != null) {
+			onBeforeMapping.callback(clazz, json);
+		}
 		if (String.class.equals(clazz)) {
 			return json;
 		}
@@ -87,7 +90,6 @@ public class ModelMapper {
 
 		if (classInfo instanceof ArrayListInfo) {
 			((ArrayListInfo) classInfo).parseJSON(json);
-			executeOnBeforeMapping(((ArrayListInfo) classInfo).rootObject);
 			Object topmostObject = ((ArrayListInfo) classInfo).topmostObject;
 			JSONArray leafArray = ((ArrayListInfo) classInfo).leafArray;
 			if (leafArray == null) {
@@ -106,7 +108,6 @@ public class ModelMapper {
 			return instance;
 		} else {
 			((ObjectInfo) classInfo).parseJSON(json);
-			executeOnBeforeMapping(((ObjectInfo) classInfo).rootObject);
 			Object topmostObject = ((ObjectInfo) classInfo).topmostObject;
 			JSONObject leafObject = ((ObjectInfo) classInfo).leafObject;
 			Object instance = generateInternal(clazz, leafObject);
@@ -223,12 +224,6 @@ public class ModelMapper {
 			}
 		}
 		return true;
-	}
-
-	private void executeOnBeforeMapping(Object data) {
-		if (onBeforeMapping != null) {
-			onBeforeMapping.callback(data);
-		}
 	}
 
 	public void setOnBeforeMapping(OnBeforeMapping onBeforeMapping) {
@@ -440,6 +435,6 @@ public class ModelMapper {
 	}
 
 	public static interface OnBeforeMapping {
-		public void callback(Object data);
+		public void callback(Class<?> clazz, String json);
 	}
 }
