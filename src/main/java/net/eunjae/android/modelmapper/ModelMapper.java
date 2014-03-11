@@ -11,6 +11,7 @@ import java.lang.reflect.*;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class ModelMapper {
 	private static ModelMapper singletonInstance = null;
@@ -294,7 +295,16 @@ public class ModelMapper {
 
 			if (fieldType.equals(Object.class)) {
 				// skip object type
-			} else if (fieldType.equals(String.class)) {
+            } else if (fieldType.equals(HashMap.class)) {
+                HashMap hashMap = new HashMap();
+                JSONObject obj = leafWrapper.optJSONObject(propertyName);
+                Iterator iterator = obj.keys();
+                while (iterator.hasNext()) {
+                    String key = (String) iterator.next();
+                    hashMap.put(key, obj.opt(key));
+                }
+                field.set(instance, hashMap);
+            } else if (fieldType.equals(String.class)) {
 				field.set(instance, leafWrapper.optString(propertyName));
 			} else if (Boolean.TYPE.equals(fieldType)) {
 				field.setBoolean(instance, new Boolean(leafWrapper.optBoolean(propertyName)));
