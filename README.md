@@ -57,13 +57,13 @@ It's done.
   <dependency>
     <groupId>net.eunjae.android.modelmapper</groupId>
     <artifactId>ModelMapper</artifactId>
-    <version>1.0.5</version>
+    <version>1.0.6</version>
   </dependency>
 ```
 ## Gradle
 
 ```
-  compile 'net.eunjae.android.modelmapper:ModelMapper:1.0.5'
+  compile 'net.eunjae.android.modelmapper:ModelMapper:1.0.6'
 ```
 
 # Usage Documentation
@@ -74,6 +74,12 @@ Check out the wiki page: https://github.com/eunjae-lee/ModelMapper/wiki
 [MIT](http://opensource.org/licenses/mit-license.html)
 
 # Changelog
+
+## 1.0.6 (2014/03/12)
+
+* OnBeforeMapping has changed a little bit.
+* A field with "HashMap" type is now mapped well.
+* Null check
 
 ## 1.0.5 (2014/03/06)
 
