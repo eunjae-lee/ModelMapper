@@ -1,3 +1,5 @@
+***THIS REPOSITORY IS NO LONGER MAINTAINED.***
+
 ModelMapper
 ===========
 
